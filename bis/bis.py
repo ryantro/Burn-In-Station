@@ -12,7 +12,9 @@ import threading
 
 class Application:
     def __init__(self, master):
-        
+        """
+        CREATE THE PROGRAM GUI
+        """
         self.master = master
         
         self.master.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -26,11 +28,9 @@ class Application:
         self.runframe.columnconfigure([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], minsize=25, weight=1)
         
         # DEFINE ROW LABELS
-        s = 1
-        e = 5
         self.rowLabels = []
-        for i in range(s,e):
-            self.rowLabels.append(tk.Label(self.runframe, text = "ROW {}".format(4-i), font = ('Ariel 15')))
+        for i in range(1,5):
+            self.rowLabels.append(tk.Label(self.runframe, text = "ROW {}".format(i), font = ('Ariel 15')))
             self.rowLabels[-1].grid(row = i, column = 0, sticky = "NSWE", padx = 5, pady = 5)
         
         # DEFINE COLUMN LABELS
@@ -43,14 +43,13 @@ class Application:
         runTimeLabel = tk.Label(self.runframe, text = "RUNTIME", font = ('Ariel 15'))
         runTimeLabel.grid(row = 0, column = 9, sticky = "NSWE", padx = 5, pady = 5)
         
-        # DEFINE HEXEL ENTRY BOXES
+        """ DEFINE HEXEL BOXES """
         self.hexels = []
-        for i in range(s,e):
+        for i in range(1,5):
             for j in range(1,8):
                 # GENERATE HEXEL NUMBER ENTRY BOX
-                self.hexels.append(tk.Entry(self.runframe, text = 'hexel{}{}'.format(i,j), width = 8, font = ('Ariel 17'), borderwidth = 2, bg = '#84e47e'))
-                self.hexels[-1].insert(0, '100XXXX')
-                self.hexels[-1].grid(row=i, column=j, sticky = "NSWE", padx = 5, pady = 5)
+                self.hexels.append(HexelBox(self.runframe, i = "({},{})".format(i,j)))
+                self.hexels[-1].box.grid(row = i, column = j, padx = 1, pady = 1)
 
         # DEFINE TOGGLE BUTTONS
         self.on = tk.PhotoImage(file = r"images/on.png")
@@ -69,7 +68,7 @@ class Application:
         self.time = []
         for i in range(0,4):
             self.time.append(tk.StringVar())
-            self.time[-1].set("0.0")
+            self.time[-1].set("0:00:00")
             self.timeLabels.append(tk.Label(self.runframe, textvariable = self.time[-1], font = ('Ariel 15')))
             self.timeLabels[-1].grid(row=i+1, column=9, sticky = "NSWE", padx = 5, pady = 5)
             
@@ -87,6 +86,9 @@ class Application:
         return
 
     def runTime(self):
+        """
+        RECORD THE RUNNING TIME OF A ROW OF HEXELS
+        """
         self.startTime = [time.time(), time.time(), time.time(), time.time()]
         while(self.running):
             for i in range(0,4):
@@ -99,12 +101,16 @@ class Application:
         return
 
     def switch(self,i):
-        
+        """
+        TOGGLE BUTTON FOR TURNING ON/OFF ROWS OF HEXELS
+        """
+        # SWITCH BUTTON OFF
         if(self.buttonStates[i]):
             self.toggleButtons[i].config(image = self.off)
             self.buttonStates[i] = False
             self.startTime[i] = time.time()
         
+        # SWITCH BUTTON ON
         else:
             self.toggleButtons[i].config(image = self.on)
             self.buttonStates[i] = True
@@ -113,23 +119,35 @@ class Application:
         return
 
     def on_closing(self):
+        """
+        EXIT THE APPLICATION
+        """
+        # PROMPT DIALOG BOX
         if tk.messagebox.askokcancel("Quit", "Do you want to quit?"):
+            
+            # MARK RUNNING FLAG AS FALSE
             self.running = False
+            
+            # JOIN THREAD1
             self.thread1.join()
+            
+            # DESTROY APPLICATION
             self.master.destroy()
             
         return
 
 class HexelBox:
-    def __init__(self, master):
+    def __init__(self, master, i = "0"):
         """
         FRAME FOR INDIVIDUAL HEXEL BOX
         ________________
+        | MODULE #     |
+        |______________|
         | HEXEL SERIAL |
         |______________|
-        | HEXEL POWER  |
+        |        POWER |
         |______________|
-        | HEXEL WL     |
+        |           WL |
         |______________|
         
         Parameters
@@ -142,26 +160,31 @@ class HexelBox:
 
         """
         # DEFINE FRAME
-        self.box = tk.Frame(master)
-        self.box.rowconfigure([0, 1, 2], minsize=30, weight=1)
+        self.box = tk.Frame(master, highlightbackground="black", highlightthickness=1)
+        self.box.rowconfigure([0, 1, 2, 3], minsize=2, weight=1)
+        
+        # SETUP BOX LABEL
+        self.boxLabel = tk.Label(self.box, text = "MODULE {}".format(i), font = ('Ariel 8'))
+        self.boxLabel.grid(row=0, sticky = "NSW", padx = 5, pady = 0)
         
         # SETUP HEXEL ENTRY BOX
         self.hexel = tk.Entry(self.box, width = 8, font = ('Ariel 17'), borderwidth = 2, bg = '#84e47e')
         self.hexel.insert(0, '100XXXX')
-        self.hexel.grid(row=0, sticky = "NSWE", padx = 5, pady = 5)
+        self.hexel.grid(row=1, sticky = "NSWE", padx = 5, pady = 0)
         
         # SETUP POWER VARIABLE AND LABEL
         self.pw = tk.StringVar()
         self.pw.set("0.0 W")
         self.pwLabel = tk.Label(self.box, textvariable = self.pw, font = ('Ariel 8'))
-        self.pwLabel.grid(row=1, sticky = "NSWE")
+        self.pwLabel.grid(row=2, sticky = "NSE", padx = 5, pady = 0)
         
         # SETUP WAVELENGTH VARIABLE AND LABEL
         self.wl = tk.StringVar()
         self.wl.set("0.0 nm")
         self.wlLabel = tk.Label(self.box, textvariable = self.wl, font = ('Ariel 8'))
-        self.wlLabel.grid(row=2, sticky = "NSWE")
+        self.wlLabel.grid(row=3, sticky = "NSE", padx = 5, pady = 0)
                         
+        
         return
     
 
