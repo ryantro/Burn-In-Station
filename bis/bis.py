@@ -67,15 +67,24 @@ class Application:
         # RUNNING
         self.running = True
         
-        # CREATE THREAD OBJECT TARGETTING THE PROGRAM
-        self.thread1 = threading.Thread(target = self.runTime)
+        # CREATE THREAD OBJECT FOR TIME KEEPING
+        self.timeTrackingThread = threading.Thread(target = self.timeTracking)
         
         # START THREAD
-        self.thread1.start()
+        self.timeTrackingThread.start()
+        
+        # CREATE THREAD OBJECTING FOR MEASUREMENT
+        self.measurementThread = None
+        
+        """
+        TODO
+            ADD TARGET TO MEASUREMENT THREAD
+            START MEASUREMENT THREAD
+        """
         
         return
 
-    def runTime(self):
+    def timeTracking(self):
         """
         RECORD THE RUNNING TIME OF A ROW OF HEXELS
         """
@@ -121,13 +130,61 @@ class Application:
             # MARK RUNNING FLAG AS FALSE
             self.running = False
             
-            # JOIN THREAD1
-            self.thread1.join()
+            # JOIN TIME TRACKING THREAD
+            self.timeTrackingThread.join()
+            
+            """
+            TODO
+                JOIN MEASUREMENT THREAD
+            """
             
             # DESTROY APPLICATION
             self.master.destroy()
             
         return
+
+    def measurementLoop(self):
+        """
+        LOOP THAT HANDLES TAKING MEASUREMENTS
+        """
+        # TIME LAST MEASUREMENT WAS TAKEN AT
+        tLast = time.time()
+        
+        # DESIGNATED TIME BETWEEN MEASUREMENTS
+        tDelta = 600.0 # SECONDS
+        
+        while(self.running):
+            
+            for hexel in self.hexels:
+            
+                # CHECK IF IT IS TIME FOR A MEASUREMENT
+                if(tDelta < (time.time() - tLast) or hexel.firstTime):
+                    """
+                    TODO
+                        1. MOVE STAGE TO HEXEL POSITION
+                            - STORE HEXEL POSITION IN HEXEL BOX OBJECT?
+                            - STAGE.MOVE(HEXEL.X,HEXEL.Y)
+                        2. TAKE POWER AND SPECTRUM
+                        3. UPDATE HEXEL OBJECT
+                    """
+                    
+                    
+                    # MARK FIRST TIME AS FALSE
+                    self.firstTime = False
+                        
+                    # RESET MEASUREMENT TIMER
+                    tLast = time.time()
+            
+            """
+            TODO
+                RETURN STAGES TO HOME POSITIONS
+            """
+            
+            # SLEEP 5 SECONDS
+            time.sleep(5)
+            
+        return
+        
 
 class HexelBox:
     def __init__(self, master, i = "0"):
@@ -145,7 +202,6 @@ class HexelBox:
         """
         # DEFINE HEXEL SERIAL NUMBER
         # self.hexel = '100----'
-        
         
         # DEFINE FRAME
         self.box = tk.Frame(master, highlightbackground="black", highlightthickness=1)
@@ -181,6 +237,7 @@ class HexelBox:
         self.startTime = 0.0
         self.tCum = 0.0
         self.hexel_old = self.hexel.get()
+        self.firstTime = True # True for first measurement, false for subsequent measurements
         
         return
     
@@ -203,8 +260,6 @@ class HexelBox:
             self.tCum = 0.0
             self.pw.set('-.- W')
             self.wl.set('-.- nm')
-            
-            
             
         return
     
@@ -239,6 +294,9 @@ class HexelBox:
         return
 
     def getHexelSerial(self):
+        """
+        GET THE SERIAL NUMBER OF A HEXEL.
+        """      
         
         return self.hexel.get()
 
@@ -251,8 +309,6 @@ def main():
     
     # RUN MAINLOOP
     root.mainloop()
-        
-
     
     return
     
