@@ -6,6 +6,10 @@ Created on Fri Jun 17 10:59:00 2022
 
 REQUIRES NI-VISA TO RUN:
     https://www.thorlabs.com/software_pages/ViewSoftwarePage.cfm?Code=PM100x
+
+MAKE SURE PM101 IS SET TO USE NI-VISA DRIVERS, CAN CHANGE DRIVER IN THORLABS 
+OPTICAL POWERMETER SOFTWARE:
+    https://www.thorlabs.com/software_pages/viewsoftwarepage.cfm?code=OPM
     
 SCPI LANGUAGE GUIDE FOR PM101:
     https://www.thorlabs.com/_sd.cfm?fileName=MTN013681-D04.pdf&partNumber=PM101
@@ -20,24 +24,31 @@ def main():
     """
     FOR UNIT TESTING
     """
+    # LIST USB RESOURCES AVAILIBLE
     showResources()
     
+    # DEVICE ADDRESS OF PM101
     addr = 'USB0::0x1313::0x8076::M00808684'
-    
     
     try:
         print("Trying to connect...")
-        PM = PowerMeter(addr)
+        PM = PowerMeter(addr, pprint = True)
         print("Connected")
+        
+        print("Getting ID...")
         PM.getIDN()
+        
+        print("Clearing status")
         PM.clearStatus()
-        print(PM.pm.send('SYSTem:VERSion?'))
+        
+        print("Setting wavelength to 450 nm")
         PM.setWL(450.0)
-        a = 'SENSe:CORRection:WAVelength?'
-        # print(PM.pm.send(a))
+        
+        print("Getting set wavelenght...")
         PM.getWL()
-        # PM.setWL(450)
-        # PM.getWL()
+        
+        print("Getting power reading...")
+        PM.getPower()
     finally:
         print("Closing...")
         PM.close()
@@ -56,12 +67,15 @@ def showResources():
     return rm
 
 class PowerMeter():
-    def __init__(self, usbaddr = 'USB0::0x1313::0x8076::M00808684'):
+    def __init__(self, usbaddr = 'USB0::0x1313::0x8076::M00808684', pprint = False):
         """
         CONNECT TO THORLABS PM101.
         """
         # CREATE A USB DEVICE OBJECT
         self.pm = USBDevice(usbaddr)
+        
+        # PRINT COMMAND RESPONSES?
+        self.pprint = pprint
         
         return
     
@@ -73,7 +87,8 @@ class PowerMeter():
         response = self.pm.send('*IDN?')
         
         # PRINT RESPONSE
-        print(response)        
+        if(self.pprint):
+            print(response)        
         
         # RETURN RESPONSE
         return response
@@ -82,9 +97,10 @@ class PowerMeter():
         """
         CLEAR THE STATUS OF THE DEVICE.
         """
-        response = self.pm.write("*CLS")
-        print(response)
-        return response
+        # SEND COMMAND TO CLEAR STATUS OF THE DEVICE
+        self.pm.write("*CLS")
+    
+        return
     
     def setWL(self, wl = 450.0):
         """
@@ -103,7 +119,8 @@ class PowerMeter():
         response = self.pm.send('SENSe:CORRection:WAVelength?')
         
         # PRINT RESPONSE
-        print(response)        
+        if(self.pprint):
+            print(response + " nm")        
         
         # RETURN RESPONSE
         return response
@@ -112,11 +129,14 @@ class PowerMeter():
         """
         GET THE POWER OF THE THERMOPILE.
         """
-        command = 'SENSe:CORRection:POWer'
-        response = self.pm.send()
+        # SEND CAMMAND TO RECIEVE POWER READING
+        response = self.pm.send('SENSe:CORRection:POWer?')
         
-        print(response)
+        # PRINT RESPONSE
+        if(self.pprint):
+            print(response + " W")
         
+        # RETURN RESPONSE
         return response
     
     def close(self):
@@ -125,7 +145,8 @@ class PowerMeter():
         """
         try:
             # SHUT OFF CURRENT OUTPUT
-            print("shutting off")
+            if(self.pprint):
+                print("shutting off")
         finally:
             # CLOSE THE DEVICE
             self.pm.close()
