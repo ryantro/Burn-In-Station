@@ -238,7 +238,7 @@ class HexelBox:
         self.tCum = 0.0
         self.hexel_old = self.hexel.get()
         self.firstTime = True # True for first measurement, false for subsequent measurements
-        
+        self.coords = [0.0, 0.0] # HEXEL MODULE X AND Y POSITIONS
         return
     
     def lock(self):
@@ -299,6 +299,17 @@ class HexelBox:
         """      
         
         return self.hexel.get()
+
+class DataMeasurement:
+    def __init__(self):
+        
+        
+        
+        return
+    
+    def MeasurementLoop(self):
+        return
+
 
 def main():
     # CREATE ROOT TKINTER OBJECT
